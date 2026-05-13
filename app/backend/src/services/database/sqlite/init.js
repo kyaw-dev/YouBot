@@ -1,5 +1,4 @@
 // Database initialization
-import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -18,6 +17,15 @@ export function getDb() {
 }
 
 export async function initDatabase() {
+  // Skip for Vercel serverless (no filesystem)
+  if (process.env.VERCEL === '1') {
+    console.log('📦 Vercel environment - using in-memory fallback');
+    return { mock: true };
+  }
+  
+  // Dynamic import for better-sqlite3
+  const Database = (await import('better-sqlite3')).default;
+  
   // Ensure storage directory exists
   const storageDir = path.join(__dirname, '../../storage');
   if (!fs.existsSync(storageDir)) {

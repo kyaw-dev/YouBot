@@ -22,10 +22,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Static files
-app.use('/uploads', express.static('../uploads'));
-app.use('/models', express.static('../models'));
-app.use('/storage', express.static('../storage'));
+// Static files (for local development only)
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/uploads', express.static('../uploads'));
+  app.use('/models', express.static('../models'));
+  app.use('/storage', express.static('../storage'));
+}
 
 // API Routes
 app.use('/api/chat', chatRoutes);
@@ -42,8 +44,17 @@ app.get('/api/health', (req, res) => {
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-// Initialize database
-async function init() {
+// Server instance for local development
+let server = null;
+let wss = null;
+
+// Initialize database and start server (local only)
+async function startServer() {
+  // Skip WebSocket and database init for Vercel serverless
+  if (process.env.VERCEL === '1') {
+    return app;
+  }
+  
   try {
     await initDatabase();
     console.log('📦 Database initialized');
@@ -51,13 +62,11 @@ async function init() {
     console.error('Database init failed:', error);
   }
 
-  // Start server
-  const server = app.listen(PORT, () => {
+  server = app.listen(PORT, () => {
     console.log(`🚀 You Bot AI backend running on port ${PORT}`);
   });
 
-  // WebSocket server for streaming
-  const wss = new WebSocketServer({ server, path: '/ws' });
+  wss = new WebSocketServer({ server, path: '/ws' });
   
   wss.on('connection', (ws) => {
     console.log('🔌 WebSocket client connected');
@@ -71,10 +80,14 @@ async function init() {
     });
   });
 
-  // Export for route access
   app.locals.wss = wss;
+  return server;
 }
 
-init();
-
+// Export for Vercel serverless
 export default app;
+
+// Start server only when run directly
+if (process.env.VERCEL !== '1') {
+  startServer();
+}
