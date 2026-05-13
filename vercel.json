@@ -7,10 +7,7 @@
     },
     {
       "src": "app/backend/src/server.js",
-      "use": "@vercel/node",
-      "output": {
-        "nodeVersion": "22"
-      }
+      "use": "@vercel/node"
     }
   ],
   "routes": [
