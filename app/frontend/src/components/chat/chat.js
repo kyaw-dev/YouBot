@@ -1,5 +1,5 @@
 // Chat Component Initialization
-import { sendChatMessage } from '../api/chat.api.js';
+import { sendChatMessage } from '../../api/chat.api.js';
 
 export function initChat() {
   const chatInput = document.getElementById('chat-input');
